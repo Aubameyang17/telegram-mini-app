@@ -1,0 +1,22 @@
+body {
+  margin: 0;
+  padding: 12px;
+  background: #f6f4ef;
+  font-family: sans-serif;
+  text-align: center;
+}
+
+canvas {
+  width: 100%;
+  max-width: 360px;
+}
+
+button {
+  margin-top: 16px;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+  background: #e63946;
+  color: white;
+}
