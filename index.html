@@ -1,115 +1,145 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wavelength Mini App</title>
 
-        body {
-            color: var(--tg-theme-text-color);
-            background: var(--tg-theme-bg-color);
-        }
+  <!-- Telegram SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-        .Main {
-            width: 100%;
-            padding: 25px;
-            text-align: center;
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        }
+    body {
+      background: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
 
-        h1 {
-            margin-top: 40px;
-            margin-bottom: 10px;
-        }
+    h1 {
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
 
-        img {
-            width: 70px;
-            margin: 30px auto;
-        }
+    canvas {
+      display: block;
+      margin: 20px auto;
+    }
 
-        .btn {
-            border: 0;
-            border-radius: 5px;
-            margin-top: 50px;
-            height: 60px;
-            width: 200px;
-            font-style: 20px;
-            font-weight: 500;
-            cursor: pointer;
-            color: var(--tg-theme-button-text-color);
-            background: var(--tg-theme-button-color);
-        }
-
-        form {
-            display: none;
-            text-align: center;
-        }
-        
-        input {
-            outline: none;
-            border-radius: 5px;
-            border: 2px solid #535353;
-            padding: 15px 10px;
-            margin: 10px 0 0;
-            background: var(--tg-theme-section-separator-color);
-            color: var(--tg-theme-text-color);
-            transition: all .2s;
-        }
-        
-        input:focus {
-            border-color: var(--tg-theme-secondary-bg-color)
-        }
-        
-    </style>
+    .btn {
+      border: 0;
+      border-radius: 6px;
+      height: 50px;
+      width: 200px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--tg-theme-button-text-color);
+      background: var(--tg-theme-button-color);
+      margin-bottom: 30px;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="Main">
-        <h1>Тестовое приложение</h1>
-        <img src="{{ url_for('static', filename='bot.png') }}" alt="">
-        <p></p>
-        <button class="btn f-btn">Тест отправки данных</button>
-    </div>
-    <form class="test-form">    
-        <input type="text" placeholder="Введите заголовок" class="title-inp">
-        <input type="text" placeholder="Введите описание" class="desc-inp">
-        <input type="text" placeholder="Введите текст" class="text-inp">
-        <button class="btn s-btn">Отправить</button>
-    </form>
+  <h1>🎯 Выбери направление</h1>
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <canvas id="dial" width="360" height="200"></canvas>
 
-    <script>
-        let tg = window.Telegram.WebApp;
+  <button id="send" class="btn">Отправить</button>
 
-        let fBtn = document.getElementsByClassName("f-btn")[0]
-        let sBtn = document.getElementsByClassName("s-btn")[0]
+  <script>
+    // ---------- TELEGRAM ----------
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
 
-        fBtn.addEventListener("click", () => {
-            document.getElementsByClassName("Main")[0].style.display = "none";
-            document.getElementsByClassName("test-form")[0].style.display = "block";
-        });
+    // ---------- CANVAS ----------
+    const canvas = document.getElementById("dial");
+    const ctx = canvas.getContext("2d");
+    const sendBtn = document.getElementById("send");
 
-        sBtn.addEventListener("click", () => {
-            let title = document.getElementsByClassName("title-inp")[0];
-            let description = document.getElementsByClassName("desc-inp")[0];
-            let text = document.getElementsByClassName("text-inp")[0];
+    const cx = canvas.width / 2;
+    const cy = canvas.height;
+    const radius = 150;
 
-            
-            let data = {
-                title: title.value,
-                desc: description.value,    
-                text: text.value
-            }
+    const segments = [
+      { value: 2, color: "#f1c453" },
+      { value: 3, color: "#ef476f" },
+      { value: 4, color: "#118ab2" },
+      { value: 3, color: "#ef476f" },
+      { value: 2, color: "#f1c453" },
+    ];
 
-            tg.sendData(JSON.stringify(data));
-        });
-    </script>
+    const total = segments.reduce((s, x) => s + x.value, 0);
+
+    let angle = 0; // выбранный угол
+
+    function drawDial() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let start = Math.PI;
+      for (const seg of segments) {
+        const slice = Math.PI * (seg.value / total);
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, start, start + slice);
+        ctx.lineTo(cx, cy);
+        ctx.fillStyle = seg.color;
+        ctx.fill();
+
+        start += slice;
+      }
+
+      drawArrow();
+    }
+
+    function drawArrow() {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -130);
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = "#222";
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left - cx;
+      const y = cy - (e.clientY - rect.top);
+
+      const a = Math.atan2(x, y);
+
+      // только верхний полукруг
+      if (a >= -Math.PI / 2 && a <= Math.PI / 2) {
+        angle = a;
+        drawDial();
+      }
+    });
+
+    // ---------- SEND DATA ----------
+    sendBtn.addEventListener("click", () => {
+      const data = {
+        angle: angle
+      };
+
+      tg.sendData(JSON.stringify(data));
+    });
+
+    // старт
+    drawDial();
+  </script>
 </body>
 </html>
-
