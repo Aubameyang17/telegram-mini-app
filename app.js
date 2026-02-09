@@ -1,9 +1,9 @@
 const tg = window.Telegram.WebApp;
 tg.ready();
 
-tg.MainButton.setText("Отправить");
+tg.MainButton.setText("SEND");
 tg.MainButton.show();
 
 tg.MainButton.onClick(() => {
-  tg.sendData("test123");
+  tg.sendData("PING_FROM_GITHUB");
 });
