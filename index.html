@@ -48,22 +48,37 @@
 </head>
 
 <body>
-  <h1>🎯 Выбери направление</h1>
+  
 
   <canvas id="dial" width="360" height="200"></canvas>
 
   <button id="send" class="btn">Отправить</button>
 
   <script>
+    
     // ---------- TELEGRAM ----------
     const params = new URLSearchParams(window.location.search);
-    const MODE = params.get("mode"); // "seer" | "guess"
+    const MODE = params.get("mode");          // seer | guess
+    const CENTER = params.get("center");      // угол в радианах (только для seer)
+    const title = document.querySelector("h1");
+    if (MODE === "seer") {
+    title.textContent = "👁 Ты телепат. Посмотри на разметку";
+    }
+    if (MODE === "guess") {
+    title.textContent = "🎯 Поставь стрелку";
+    }
+
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
+    
     if (MODE !== "seer" && MODE !== "guess") {
     tg.showAlert("Ошибка: неизвестный режим Mini App");
     }
+    if (MODE === "seer" && CENTER === null) {
+    tg.showAlert("Ошибка: нет разметки для телепата");
+    }
+
 
     // ---------- CANVAS ----------
     const canvas = document.getElementById("dial");
@@ -74,48 +89,53 @@
     const cy = canvas.height;
     const radius = 150;
 
-    const segments = [
-      { value: 2, color: "#f1c453" },
-      { value: 3, color: "#ef476f" },
-      { value: 4, color: "#118ab2" },
-      { value: 3, color: "#ef476f" },
-      { value: 2, color: "#f1c453" },
-    ];
+    function drawMarking(centerAngle) {
+  const zones = [
+    { score: 2, width: 0.04, color: "#f1c453" },
+    { score: 3, width: 0.04, color: "#ef476f" },
+    { score: 4, width: 0.04, color: "#118ab2" },
+    { score: 3, width: 0.04, color: "#ef476f" },
+    { score: 2, width: 0.04, color: "#f1c453" },
+  ];
 
-    const total = segments.reduce((s, x) => s + x.value, 0);
+  let offset = -zones.reduce((s, z) => s + z.width, 0) / 2;
+
+  for (const z of zones) {
+    const start = centerAngle + offset * Math.PI;
+    const end = start + z.width * Math.PI;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, Math.PI + start, Math.PI + end);
+    ctx.lineTo(cx, cy);
+    ctx.fillStyle = z.color;
+    ctx.fill();
+
+    offset += z.width;
+  }
+}
+
 
     let angle = 0; // выбранный угол
 
     function drawDial() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-    if (MODE === "seer") {
-      // рисуем цветные сегменты
-      let start = Math.PI;
-      for (const seg of segments) {
-        const slice = Math.PI * (seg.value / total);
-  
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius, start, start + slice);
-        ctx.lineTo(cx, cy);
-        ctx.fillStyle = seg.color;
-        ctx.fill();
-  
-        start += slice;
-      }
-    } else {
-      // пустой полукруг
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, Math.PI, 2 * Math.PI);
-      ctx.strokeStyle = "#666";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-    }
-  
-    if (MODE === "guess") {
-      drawArrow();
-    }
-    }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // базовый полукруг
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, Math.PI, 2 * Math.PI);
+  ctx.strokeStyle = "#666";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  if (MODE === "seer") {
+    drawMarking(parseFloat(CENTER));
+  }
+
+  if (MODE === "guess") {
+    drawArrow();
+  }
+}
+
 
 
     function drawArrow() {
@@ -165,4 +185,5 @@ if (MODE === "seer") {
   </script>
 </body>
 </html>
+
 
