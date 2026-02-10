@@ -108,14 +108,42 @@ function drawArc(start, end, color) {
     { width: 0.04, color: "#f1c453" },
   ];
 
-  const total = zones.reduce((s, z) => s + z.width, 0) * Math.PI;
-  let offset = -total / 2;
-
-  for (const z of zones) {
+  const totalZoneWidth = zones.reduce((s, z) => s + z.width, 0) * Math.PI;
+  
+  // Рисуем зоны с ЛЕВОЙ стороны от центра (centerAngle - offset)
+  let offset = totalZoneWidth / 2;
+  for (let i = 0; i < zones.length; i++) {
+    const zone = zones[i];
+    const start = centerAngle - offset;
+    const end = start + zone.width * Math.PI;
+    
+    // Рисуем только видимую верхнюю часть
+    const visibleStart = Math.max(start, Math.PI);
+    const visibleEnd = Math.min(end, 2 * Math.PI);
+    
+    if (visibleEnd > visibleStart) {
+      drawArc(visibleStart, visibleEnd, zone.color);
+    }
+    
+    offset -= zone.width * Math.PI;
+  }
+  
+  // Рисуем зоны с ПРАВОЙ стороны от центра (centerAngle + offset)
+  offset = 0;
+  for (let i = 0; i < zones.length; i++) {
+    const zone = zones[i];
     const start = centerAngle + offset;
-    const end = start + z.width * Math.PI;
-    drawArc(start, end, z.color);
-    offset += z.width * Math.PI;
+    const end = start + zone.width * Math.PI;
+    
+    // Рисуем только видимую верхнюю часть
+    const visibleStart = Math.max(start, Math.PI);
+    const visibleEnd = Math.min(end, 2 * Math.PI);
+    
+    if (visibleEnd > visibleStart) {
+      drawArc(visibleStart, visibleEnd, zone.color);
+    }
+    
+    offset += zone.width * Math.PI;
   }
 }
 
@@ -141,7 +169,7 @@ function drawArc(start, end, color) {
   if (MODE === "guess") {
     drawArrow();
   }
-    
+
   ctx.fillStyle = "var(--tg-theme-bg-color, #ffffff)";
   ctx.fillRect(0, cy, canvas.width, canvas.height);
 
