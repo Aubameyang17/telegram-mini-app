@@ -100,8 +100,9 @@ function drawArc(start, end, color) {
 
 
    function drawMarking(centerAngle) {
-  const canvasCenterAngle = Math.PI + (centerAngle + Math.PI/2);
-
+  // Преобразуем в координаты canvas
+  const canvasCenter = Math.PI + (centerAngle + Math.PI/2);
+  
   const zones = [
     { width: 0.04, color: "#f1c453" },
     { width: 0.04, color: "#ef476f" },
@@ -110,42 +111,36 @@ function drawArc(start, end, color) {
     { width: 0.04, color: "#f1c453" },
   ];
 
-  const totalZoneWidth = zones.reduce((s, z) => s + z.width, 0) * Math.PI;
-
-  // Рисуем зоны с ЛЕВОЙ стороны от центра
-  let offset = totalZoneWidth / 2;
-  for (let i = 0; i < zones.length; i++) {
-    const zone = zones[i];
-    const start = canvasCenterAngle - offset;
-    const end = start + zone.width * Math.PI;
-
-    const visibleStart = Math.max(start, Math.PI);
-    const visibleEnd = Math.min(end, 2 * Math.PI);
-
-    if (visibleEnd > visibleStart) {
-      drawArc(visibleStart, visibleEnd, zone.color);
-    }
-
-    offset -= zone.width * Math.PI;
+  // Зона слева от центра
+  let pos = canvasCenter - zones.reduce((s, z) => s + z.width, 0) * Math.PI / 2;
+  for (const zone of zones) {
+    drawSegment(pos, pos + zone.width * Math.PI, zone.color);
+    pos += zone.width * Math.PI;
   }
-
-  // Рисуем зоны с ПРАВОЙ стороны от центра
-  offset = 0;
-  for (let i = 0; i < zones.length; i++) {
-    const zone = zones[i];
-    const start = canvasCenterAngle + offset;
-    const end = start + zone.width * Math.PI;
-
-    const visibleStart = Math.max(start, Math.PI);
-    const visibleEnd = Math.min(end, 2 * Math.PI);
-
-    if (visibleEnd > visibleStart) {
-      drawArc(visibleStart, visibleEnd, zone.color);
-    }
-
-    offset += zone.width * Math.PI;
+  
+  // Зона справа от центра
+  pos = canvasCenter;
+  for (const zone of zones) {
+    drawSegment(pos, pos + zone.width * Math.PI, zone.color);
+    pos += zone.width * Math.PI;
   }
 }
+
+function drawSegment(start, end, color) {
+  // Рисуем только видимую часть верхнего полукруга
+  const visibleStart = Math.max(start, Math.PI);
+  const visibleEnd = Math.min(end, 2 * Math.PI);
+  
+  if (visibleEnd > visibleStart) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, visibleStart, visibleEnd);
+    ctx.lineTo(cx, cy);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+}
+
+
 
 
     let angle = 0; // выбранный угол
@@ -223,5 +218,4 @@ if (MODE === "seer") {
   </script>
 </body>
 </html>
-
 
