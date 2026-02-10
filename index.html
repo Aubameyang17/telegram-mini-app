@@ -98,42 +98,50 @@
   while (angle > MAX) angle -= RANGE;
   return angle;
 }
+function drawArc(start, end, color) {
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, Math.PI + start, Math.PI + end);
+  ctx.lineTo(cx, cy);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
 
     function drawMarking(centerAngle) {
   const zones = [
-    { score: 2, width: 0.04, color: "#f1c453" },
-    { score: 3, width: 0.04, color: "#ef476f" },
-    { score: 4, width: 0.04, color: "#118ab2" },
-    { score: 3, width: 0.04, color: "#ef476f" },
-    { score: 2, width: 0.04, color: "#f1c453" },
+    { width: 0.04, color: "#f1c453" },
+    { width: 0.04, color: "#ef476f" },
+    { width: 0.04, color: "#118ab2" },
+    { width: 0.04, color: "#ef476f" },
+    { width: 0.04, color: "#f1c453" },
   ];
 
-  const totalWidth = zones.reduce((s, z) => s + z.width, 0) * Math.PI;
-  let offset = -totalWidth / 2;
+  const total = zones.reduce((s, z) => s + z.width, 0) * Math.PI;
+  let offset = -total / 2;
 
   for (const z of zones) {
     let start = centerAngle + offset;
-    let end   = start + z.width * Math.PI;
+    let end = start + z.width * Math.PI;
 
-    // --- WRAP ---
-    start = wrap(start);
-    end   = wrap(end);
-
-    ctx.beginPath();
-    ctx.arc(
-      cx,
-      cy,
-      radius,
-      Math.PI + start,
-      Math.PI + end
-    );
-    ctx.lineTo(cx, cy);
-    ctx.fillStyle = z.color;
-    ctx.fill();
+    // полностью внутри
+    if (start >= MIN && end <= MAX) {
+      drawArc(start, end, z.color);
+    }
+    // вышли справа
+    else if (end > MAX) {
+      drawArc(start, MAX, z.color);
+      drawArc(MIN, wrap(end), z.color);
+    }
+    // вышли слева
+    else if (start < MIN) {
+      drawArc(wrap(start), MAX, z.color);
+      drawArc(MIN, end, z.color);
+    }
 
     offset += z.width * Math.PI;
   }
 }
+
 
 
 
@@ -148,7 +156,7 @@
   ctx.arc(cx, cy, radius, Math.PI, 2 * Math.PI);
   ctx.lineTo(cx, cy);
   ctx.closePath();
-  ctx.fillStyle = "aquamarine";
+  ctx.fillStyle = "#7fffd4";
   ctx.fill();
 
 
