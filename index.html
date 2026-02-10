@@ -48,14 +48,14 @@
 </head>
 
 <body>
-  
+
   <h1 id="title"></h1>
   <canvas id="dial" width="360" height="200"></canvas>
 
   <button id="send" class="btn">Отправить</button>
 
   <script>
-    
+
     // ---------- TELEGRAM ----------
     const params = new URLSearchParams(window.location.search);
     const MODE = params.get("mode");          // seer | guess
@@ -71,7 +71,7 @@
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
-    
+
     if (MODE !== "seer" && MODE !== "guess") {
     tg.showAlert("Ошибка: неизвестный режим Mini App");
     }
@@ -88,6 +88,16 @@
     const cx = canvas.width / 2;
     const cy = canvas.height;
     const radius = 150;
+    const MIN = -Math.PI / 2;
+    const MAX =  Math.PI / 2;
+    const RANGE = Math.PI;
+
+
+    function wrap(angle) {
+  while (angle < MIN) angle += RANGE;
+  while (angle > MAX) angle -= RANGE;
+  return angle;
+}
 
     function drawMarking(centerAngle) {
   const zones = [
@@ -98,21 +108,33 @@
     { score: 2, width: 0.04, color: "#f1c453" },
   ];
 
-  let offset = -zones.reduce((s, z) => s + z.width, 0) / 2;
+  const totalWidth = zones.reduce((s, z) => s + z.width, 0) * Math.PI;
+  let offset = -totalWidth / 2;
 
   for (const z of zones) {
-    const start = centerAngle + offset * Math.PI;
-    const end = start + z.width * Math.PI;
+    let start = centerAngle + offset;
+    let end   = start + z.width * Math.PI;
+
+    // --- WRAP ---
+    start = wrap(start);
+    end   = wrap(end);
 
     ctx.beginPath();
-    ctx.arc(cx, cy, radius, Math.PI + start, Math.PI + end);
+    ctx.arc(
+      cx,
+      cy,
+      radius,
+      Math.PI + start,
+      Math.PI + end
+    );
     ctx.lineTo(cx, cy);
     ctx.fillStyle = z.color;
     ctx.fill();
 
-    offset += z.width;
+    offset += z.width * Math.PI;
   }
 }
+
 
 
     let angle = 0; // выбранный угол
@@ -121,11 +143,19 @@
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // базовый полукруг
+
   ctx.beginPath();
   ctx.arc(cx, cy, radius, Math.PI, 2 * Math.PI);
+  ctx.lineTo(cx, cy);
+  ctx.closePath();
+  ctx.fillStyle = "aquamarine";
+  ctx.fill();
+
+
   ctx.strokeStyle = "#666";
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2;
   ctx.stroke();
+
 
   if (MODE === "seer") {
     drawMarking(parseFloat(CENTER));
@@ -155,13 +185,13 @@
 
     canvas.addEventListener("click", (e) => {
     if (MODE !== "guess") return;
-  
+
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left - cx;
     const y = cy - (e.clientY - rect.top);
-  
+
     const a = Math.atan2(x, y);
-  
+
     if (a >= -Math.PI / 2 && a <= Math.PI / 2) {
       angle = a;
       drawDial();
@@ -185,6 +215,4 @@ if (MODE === "seer") {
   </script>
 </body>
 </html>
-
-
 
