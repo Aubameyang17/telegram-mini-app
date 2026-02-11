@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Wavelength Mini App</title>
 
-  <!-- Telegram SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
@@ -38,7 +37,6 @@
       height: 50px;
       width: 200px;
       font-size: 16px;
-      font-weight: 500;
       cursor: pointer;
       color: var(--tg-theme-button-text-color);
       background: var(--tg-theme-button-color);
@@ -49,144 +47,98 @@
 
 <body>
 
-  <h1 id="title"></h1>
-  <canvas id="dial" width="360" height="200"></canvas>
+<h1 id="title"></h1>
+<canvas id="dial" width="360" height="200"></canvas>
+<button id="send" class="btn">Отправить</button>
 
-  <button id="send" class="btn">Отправить</button>
+<script>
+  // ---------- TELEGRAM ----------
+  const params = new URLSearchParams(window.location.search);
+  const MODE = params.get("mode");     // seer | guess
+  const CENTER = params.get("center"); // радианы (0..2π)
 
-  <script>
+  const title = document.getElementById("title");
 
-    // ---------- TELEGRAM ----------
-    const params = new URLSearchParams(window.location.search);
-    const MODE = params.get("mode");          // seer | guess
-    const CENTER = params.get("center");      // угол в радианах (только для seer)
-    const title = document.querySelector("h1");
-    if (MODE === "seer") {
-    title.textContent = "👁 Ты телепат. Посмотри на разметку";
-    }
-    if (MODE === "guess") {
-    title.textContent = "🎯 Поставь стрелку";
-    }
+  if (MODE === "seer") title.textContent = "👁 Ты телепат. Посмотри на разметку";
+  if (MODE === "guess") title.textContent = "🎯 Поставь стрелку";
 
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
 
-    if (MODE !== "seer" && MODE !== "guess") {
-    tg.showAlert("Ошибка: неизвестный режим Mini App");
-    }
-    if (MODE === "seer" && CENTER === null) {
-    tg.showAlert("Ошибка: нет разметки для телепата");
-    }
+  // ---------- CANVAS ----------
+  const canvas = document.getElementById("dial");
+  const ctx = canvas.getContext("2d");
+  const sendBtn = document.getElementById("send");
 
+  const cx = canvas.width / 2;
+  const cy = canvas.height;
+  const radius = 150;
 
-    // ---------- CANVAS ----------
-    const canvas = document.getElementById("dial");
-    const ctx = canvas.getContext("2d");
-    const sendBtn = document.getElementById("send");
+  let angle = 0;
 
-    const cx = canvas.width / 2;
-    const cy = canvas.height;
-    const radius = 150;
+  function drawZone(center, color) {
+    const width = 0.04 * Math.PI;
 
-function drawArc(start, end, color) {
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, start, end);
-  ctx.lineTo(cx, cy);
-  ctx.fillStyle = color;
-  ctx.fill();
-}
-
-
-
-   function drawMarking(centerAngle) {
-  // Преобразуем в координаты canvas
-  const canvasCenter = Math.PI + (centerAngle + Math.PI/2);
-  
-  const zones = [
-    { width: 0.04, color: "#f1c453" },
-    { width: 0.04, color: "#ef476f" },
-    { width: 0.04, color: "#118ab2" },
-    { width: 0.04, color: "#ef476f" },
-    { width: 0.04, color: "#f1c453" },
-  ];
-
-  // Зона слева от центра
-  let pos = canvasCenter - zones.reduce((s, z) => s + z.width, 0) * Math.PI / 2;
-  for (const zone of zones) {
-    drawSegment(pos, pos + zone.width * Math.PI, zone.color);
-    pos += zone.width * Math.PI;
-  }
-  
-  // Зона справа от центра
-  pos = canvasCenter;
-  for (const zone of zones) {
-    drawSegment(pos, pos + zone.width * Math.PI, zone.color);
-    pos += zone.width * Math.PI;
-  }
-}
-
-function drawSegment(start, end, color) {
-  // Рисуем только видимую часть верхнего полукруга
-  const visibleStart = Math.max(start, Math.PI);
-  const visibleEnd = Math.min(end, 2 * Math.PI);
-  
-  if (visibleEnd > visibleStart) {
     ctx.beginPath();
-    ctx.arc(cx, cy, radius, visibleStart, visibleEnd);
+    ctx.arc(
+      cx,
+      cy,
+      radius,
+      center - width / 2,
+      center + width / 2
+    );
     ctx.lineTo(cx, cy);
     ctx.fillStyle = color;
     ctx.fill();
   }
-}
 
-
-
-
-    let angle = 0; // выбранный угол
-
-    function drawDial() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // круг
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
-  ctx.fillStyle = "#7fffd4";
-  ctx.fill();
-
-  if (MODE === "seer") {
-    drawMarking(parseFloat(CENTER));
+  function drawMarking(center) {
+    drawZone(center, "#118ab2");
+    drawZone(center + Math.PI, "#118ab2");
   }
 
-  if (MODE === "guess") {
-    drawArrow();
+  function drawArrow() {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -130);
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = "#222";
+    ctx.stroke();
+
+    ctx.restore();
   }
 
-  ctx.fillStyle = "var(--tg-theme-bg-color, #ffffff)";
-  ctx.fillRect(0, cy, canvas.width, canvas.height);
+  function drawDial() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  ctx.restore();
-}
+    // полный круг
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+    ctx.fillStyle = "#7fffd4";
+    ctx.fill();
 
-
-
-
-    function drawArrow() {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(angle);
-
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(0, -130);
-      ctx.lineWidth = 6;
-      ctx.strokeStyle = "#222";
-      ctx.stroke();
-
-      ctx.restore();
+    if (MODE === "seer") {
+      drawMarking(parseFloat(CENTER));
     }
 
-    canvas.addEventListener("click", (e) => {
+    if (MODE === "guess") {
+      drawArrow();
+    }
+
+    // накрываем нижнюю половину
+    ctx.fillStyle =
+      getComputedStyle(document.body)
+        .getPropertyValue("--tg-theme-bg-color") || "#fff";
+
+    ctx.fillRect(0, cy, canvas.width, canvas.height);
+  }
+
+  canvas.addEventListener("click", (e) => {
     if (MODE !== "guess") return;
 
     const rect = canvas.getBoundingClientRect();
@@ -199,23 +151,18 @@ function drawSegment(start, end, color) {
       angle = a;
       drawDial();
     }
-    });
+  });
 
-if (MODE === "seer") {
-  sendBtn.style.display = "none";
-}
+  if (MODE === "seer") {
+    sendBtn.style.display = "none";
+  }
 
-    // ---------- SEND DATA ----------
-    sendBtn.addEventListener("click", () => {
-  if (MODE !== "guess") return;
+  sendBtn.addEventListener("click", () => {
+    tg.sendData(JSON.stringify({ angle }));
+  });
 
-  tg.sendData(JSON.stringify({ angle }));
-});
+  drawDial();
+</script>
 
-
-    // старт
-    drawDial();
-  </script>
 </body>
 </html>
-
