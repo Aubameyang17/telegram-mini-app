@@ -77,26 +77,49 @@
 
   let angle = 0;
 
-  function drawZone(center, color) {
-    const width = 0.04 * Math.PI;
+  function drawScoredZone(center, width, color, score) {
+  const start = center - width / 2;
+  const end = center + width / 2;
 
-    ctx.beginPath();
-    ctx.arc(
-      cx,
-      cy,
-      radius,
-      center - width / 2,
-      center + width / 2
-    );
-    ctx.lineTo(cx, cy);
-    ctx.fillStyle = color;
-    ctx.fill();
-  }
+  // сама зона
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, start, end);
+  ctx.lineTo(cx, cy);
+  ctx.fillStyle = color;
+  ctx.fill();
 
-  function drawMarking(center) {
-    drawZone(center, "#118ab2");
-    drawZone(center + Math.PI, "#118ab2");
+  // подпись очков
+  const textAngle = center;
+  const textRadius = radius - 20;
+
+  const tx = cx + Math.cos(textAngle) * textRadius;
+  const ty = cy + Math.sin(textAngle) * textRadius;
+
+  ctx.fillStyle = "#000";
+  ctx.font = "bold 14px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(score, tx, ty);
+}
+
+function drawMarking(center) {
+  const zones = [
+    { score: 2, width: 0.06 * Math.PI, color: "#d4a017" },
+    { score: 3, width: 0.05 * Math.PI, color: "#f4a6a6" },
+    { score: 4, width: 0.04 * Math.PI, color: "#118ab2" },
+    { score: 3, width: 0.05 * Math.PI, color: "#f4a6a6" },
+    { score: 2, width: 0.06 * Math.PI, color: "#d4a017" },
+  ];
+
+  let offset = 0;
+
+  for (const z of zones) {
+    const zoneCenter = center + offset;
+    drawScoredZone(zoneCenter, z.width, z.color, z.score);
+    drawScoredZone(zoneCenter + Math.PI, z.width, z.color, z.score);
+    offset += z.width;
   }
+}
 
   function drawArrow() {
     ctx.save();
