@@ -104,20 +104,23 @@
 
 function drawMarking(center) {
   const zones = [
-    { score: 2, width: 0.06 * Math.PI, color: "#d4a017" },
-    { score: 3, width: 0.05 * Math.PI, color: "#f4a6a6" },
-    { score: 4, width: 0.04 * Math.PI, color: "#118ab2" },
-    { score: 3, width: 0.05 * Math.PI, color: "#f4a6a6" },
-    { score: 2, width: 0.06 * Math.PI, color: "#d4a017" },
+    { score: 2, width: 0.06 * Math.PI, color: "#FFD700" },
+    { score: 3, width: 0.05 * Math.PI, color: "#DC143C" },
+    { score: 4, width: 0.04 * Math.PI, color: "#4682B4" },
+    { score: 3, width: 0.05 * Math.PI, color: "#DC143C" },
+    { score: 2, width: 0.06 * Math.PI, color: "#FFD700" },
   ];
 
-  let offset = 0;
+  const totalWidth = zones.reduce((s, z) => s + z.width, 0);
+  let start = center - totalWidth / 2;
 
   for (const z of zones) {
-    const zoneCenter = center + offset;
+    const zoneCenter = start + z.width / 2;
+
     drawScoredZone(zoneCenter, z.width, z.color, z.score);
     drawScoredZone(zoneCenter + Math.PI, z.width, z.color, z.score);
-    offset += z.width;
+
+    start += z.width;
   }
 }
 
@@ -189,3 +192,4 @@ function drawMarking(center) {
 
 </body>
 </html>
+
