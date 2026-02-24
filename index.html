@@ -171,7 +171,7 @@ function drawMarking(center) {
     const x = e.clientX - rect.left - cx;
     const y = cy - (e.clientY - rect.top);
 
-    const a = Math.atan2(x, y);
+    const a = Math.atan2(y, x);
 
     if (a >= -Math.PI / 2 && a <= Math.PI / 2) {
       angle = a;
@@ -192,4 +192,5 @@ function drawMarking(center) {
 
 </body>
 </html>
+
 
